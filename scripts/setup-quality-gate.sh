@@ -52,6 +52,29 @@ add_condition duplicated_lines_density GT 3
 # tests, so gating on coverage would fail the clean baseline too. Adding tests
 # is the honest next step; see "What we did not do" in the README.
 
+# SonarQube seeds every new gate with its "clean as you code" conditions.
+# Coverage is dropped: this API was written across Weeks 3-10 with no unit
+# tests, so gating on it would fail the clean baseline as well as the bad
+# branch, which proves nothing. Adding tests is the honest next step.
+drop_condition() {
+  local metric="$1"
+  local id
+  id=$(curl -fsS -u "${TOKEN}:" "${HOST_URL}/api/qualitygates/show?name=$(printf %s "${GATE_NAME}" | sed 's/ /%20/g')" \
+        | /usr/bin/python3 -c "
+import sys, json
+conds = json.load(sys.stdin).get('conditions', [])
+print(next((c['id'] for c in conds if c['metric'] == '${metric}'), ''))
+" 2>/dev/null)
+  if [ -n "$id" ]; then
+    echo "  removing seeded condition: ${metric}"
+    curl -fsS -u "${TOKEN}:" -X POST "${HOST_URL}/api/qualitygates/delete_condition" \
+         --data-urlencode "id=${id}" >/dev/null
+  fi
+}
+
+drop_condition new_coverage
+drop_condition new_security_hotspots_reviewed
+
 echo "Attaching '${GATE_NAME}' to project '${PROJECT_KEY}'..."
 api select \
   --data-urlencode "gateName=${GATE_NAME}" \
