@@ -1,0 +1,129 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model categories {
+  CategoryID   Int        @id @default(autoincrement())
+  CategoryName String?    @db.VarChar(255)
+  Description  String?    @db.VarChar(255)
+  products     products[]
+}
+
+model customers {
+  CustomerID   Int      @id @default(autoincrement())
+  CustomerName String?  @db.VarChar(255)
+  ContactName  String?  @db.VarChar(255)
+  Address      String?  @db.VarChar(255)
+  City         String?  @db.VarChar(255)
+  PostalCode   String?  @db.VarChar(255)
+  Country      String?  @db.VarChar(255)
+  orders       orders[]
+}
+
+model employees {
+  EmployeeID Int       @id @default(autoincrement())
+  LastName   String?   @db.VarChar(255)
+  FirstName  String?   @db.VarChar(255)
+  BirthDate  DateTime? @db.Date
+  Photo      String?   @db.VarChar(255)
+  Notes      String?   @db.Text
+  orders     orders[]
+}
+
+model order_details {
+  OrderDetailID Int       @id @default(autoincrement())
+  OrderID       Int?
+  ProductID     Int?
+  Quantity      Int?
+  orders        orders?   @relation(fields: [OrderID], references: [OrderID], onDelete: NoAction, onUpdate: NoAction, map: "order_details_ibfk_1")
+  products      products? @relation(fields: [ProductID], references: [ProductID], onDelete: NoAction, onUpdate: NoAction, map: "order_details_ibfk_2")
+
+  @@index([OrderID], map: "OrderID")
+  @@index([ProductID], map: "ProductID")
+}
+
+model orders {
+  OrderID       Int             @id @default(autoincrement())
+  CustomerID    Int?
+  EmployeeID    Int?
+  OrderDate     DateTime?       @db.Date
+  ShipperID     Int?
+  order_details order_details[]
+  customers     customers?      @relation(fields: [CustomerID], references: [CustomerID], onDelete: NoAction, onUpdate: NoAction, map: "orders_ibfk_1")
+  employees     employees?      @relation(fields: [EmployeeID], references: [EmployeeID], onDelete: NoAction, onUpdate: NoAction, map: "orders_ibfk_2")
+  shippers      shippers?       @relation(fields: [ShipperID], references: [ShipperID], onDelete: NoAction, onUpdate: NoAction, map: "orders_ibfk_3")
+
+  @@index([CustomerID], map: "CustomerID")
+  @@index([EmployeeID], map: "EmployeeID")
+  @@index([ShipperID], map: "ShipperID")
+}
+
+model products {
+  ProductID     Int             @id @default(autoincrement())
+  ProductName   String?         @db.VarChar(255)
+  SupplierID    Int?
+  CategoryID    Int?
+  Unit          String?         @db.VarChar(255)
+  Price         Float?
+  order_details order_details[]
+  orderitems    orderitems[]
+  categories    categories?     @relation(fields: [CategoryID], references: [CategoryID], onDelete: NoAction, onUpdate: NoAction, map: "products_ibfk_1")
+  suppliers     suppliers?      @relation(fields: [SupplierID], references: [SupplierID], onDelete: NoAction, onUpdate: NoAction, map: "products_ibfk_2")
+
+  @@index([CategoryID], map: "CategoryID")
+  @@index([SupplierID], map: "SupplierID")
+}
+
+model shippers {
+  ShipperID   Int      @id @default(autoincrement())
+  ShipperName String?  @db.VarChar(255)
+  Phone       String?  @db.VarChar(255)
+  orders      orders[]
+}
+
+model suppliers {
+  SupplierID   Int        @id @default(autoincrement())
+  SupplierName String?    @db.VarChar(255)
+  ContactName  String?    @db.VarChar(255)
+  Address      String?    @db.VarChar(255)
+  City         String?    @db.VarChar(255)
+  PostalCode   String?    @db.VarChar(255)
+  Country      String?    @db.VarChar(255)
+  Phone        String?    @db.VarChar(255)
+  products     products[]
+}
+
+model users {
+  id            Int    @id @default(autoincrement())
+  username      String @unique(map: "username") @db.VarChar(50)
+  password_hash String @db.VarChar(255)
+  user_orders   user_orders[]
+}
+
+// --- NEW MODELS ADDED IN WEEK 5 ---
+
+model user_orders {
+  OrderID     Int          @id @default(autoincrement())
+  UserID      Int
+  OrderDate   DateTime     @default(now())
+  TotalAmount Decimal      @default(0.00) @db.Decimal(10, 2)
+
+  user        users        @relation(fields: [UserID], references: [id])
+  items       orderitems[]
+}
+
+model orderitems {
+  OrderItemID Int         @id @default(autoincrement())
+  OrderID     Int
+  ProductID   Int
+  Quantity    Int
+  Price       Decimal     @db.Decimal(10, 2)
+
+  order       user_orders @relation(fields: [OrderID], references: [OrderID], onDelete: Cascade)
+  product     products    @relation(fields: [ProductID], references: [ProductID])
+}

@@ -1,0 +1,32 @@
+# Application stack (Week 10 shape). Values come from the environment, never
+# from this file - committing them here is exactly how a live Azure client
+# secret ends up in a public repository.
+#
+# Usage:  set -a && source .env && set +a && docker compose up -d
+services:
+  redis-cache:
+    image: redis:7-alpine
+    container_name: csx4110-redis
+    ports:
+      - "6379:6379"
+    restart: always
+
+  api:
+    image: ${API_IMAGE:-kayostt/secure-crud-api:latest}
+    container_name: csx4110-api
+    ports:
+      - "3000:3000"
+    restart: always
+    depends_on:
+      - redis-cache
+    environment:
+      - PORT=3000
+      - REDIS_HOST=redis-cache
+      - REDIS_PORT=6379
+      # Interpolated from your shell/.env at "docker compose up" time.
+      - DATABASE_URL=${DATABASE_URL:?set DATABASE_URL in .env}
+      - JWT_SECRET=${JWT_SECRET:?set JWT_SECRET in .env}
+      - KEY_VAULT_URL=${KEY_VAULT_URL:?set KEY_VAULT_URL in .env}
+      - AZURE_TENANT_ID=${AZURE_TENANT_ID:?set AZURE_TENANT_ID in .env}
+      - AZURE_CLIENT_ID=${AZURE_CLIENT_ID:?set AZURE_CLIENT_ID in .env}
+      - AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET:?set AZURE_CLIENT_SECRET in .env}

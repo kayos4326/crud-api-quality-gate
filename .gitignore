@@ -1,0 +1,17 @@
+node_modules
+coverage
+
+# Scanner working directory
+.scannerwork
+/generated/prisma
+
+# Environment and secrets: keep every variant out of version control.
+.env
+.env.*
+!.env.example
+
+# Compose overrides routinely hold credentials.
+docker-compose.override.yml
+docker-compose.*.local.yml
+
+.DS_Store

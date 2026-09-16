@@ -1,0 +1,21 @@
+# The SonarQube server used by the quality gate. Kept in its own file so it
+# never mixes with the application stack in docker-compose.yml.
+services:
+  sonarqube:
+    image: sonarqube:26.9.0.129388-community
+    container_name: sonarqube-crud-api
+    ports:
+      - "9000:9000"
+    environment:
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_logs:/opt/sonarqube/logs
+      - sonarqube_extensions:/opt/sonarqube/extensions
+    ulimits:
+      nofile: { soft: 65536, hard: 65536 }
+
+volumes:
+  sonarqube_data:
+  sonarqube_logs:
+  sonarqube_extensions:
