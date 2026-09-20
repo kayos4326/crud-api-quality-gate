@@ -4,7 +4,9 @@ set -euo pipefail
 
 # --- Configuration ---
 VM_USER="azureuser"
-VM_HOST="chaotic-hell.eastasia.cloudapp.azure.com"
+# Supply the real address when deploying:
+#   VM_HOST=your-name.region.cloudapp.azure.com ./deploy.sh
+VM_HOST="${VM_HOST:-YOUR_AZURE_FQDN}"
 KEY_PATH="$HOME/.ssh/bad-vps-01_key.pem"
 TARGET_DIR="~/crud-api"
 
