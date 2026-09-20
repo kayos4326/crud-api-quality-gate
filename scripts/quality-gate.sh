@@ -7,6 +7,26 @@ cd "$(dirname "$0")/.."
 
 export SONAR_HOST_URL="${SONAR_HOST_URL:-http://localhost:9000}"
 
+# The scanner needs Java. On macOS, Homebrew's JDK is often installed but not
+# registered with /usr/libexec/java_home, so /usr/bin/java only shows the
+# "Unable to locate a Java Runtime" dialog. Discover the common Homebrew
+# locations before starting the scan.
+if ! java -version >/dev/null 2>&1; then
+  for java_root in /opt/homebrew/opt/openjdk /usr/local/opt/openjdk; do
+    if [ -x "${java_root}/bin/java" ]; then
+      export JAVA_HOME="${java_root}"
+      export PATH="${JAVA_HOME}/bin:${PATH}"
+      break
+    fi
+  done
+fi
+
+if ! java -version >/dev/null 2>&1; then
+  echo "ERROR: Java is required by the SonarQube scanner." >&2
+  echo "Install a JDK, then run this script again." >&2
+  exit 1
+fi
+
 if ! curl -fsS "${SONAR_HOST_URL}/api/system/status" >/dev/null 2>&1; then
   echo "==> Starting SonarQube"
   docker compose -f docker-compose.sonarqube.yml up -d
