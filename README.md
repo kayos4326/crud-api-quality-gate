@@ -1,6 +1,6 @@
 # Campus CRUD API — SonarQube quality gate
 
-Business Application Development (CSX4110), Mahidol ICT.
+Backend Application Development (CSX4110), Assumption University.
 
 **Team:** Thar Lin Htet · Honey Linn · Mi Hsu Myat Win Myint
 
