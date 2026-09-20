@@ -15,3 +15,9 @@ docker-compose.override.yml
 docker-compose.*.local.yml
 
 .DS_Store
+
+# Local presentation build and rendering files
+.codex-build-presentations/
+.codex-finalizer/
+.codex-rendered-*/
+presentation/montage-*.png
