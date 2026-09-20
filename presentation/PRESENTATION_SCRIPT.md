@@ -6,9 +6,9 @@ The same script is stored in the PowerPoint speaker notes. Use Presenter View du
 
 | Presenter | Slides | Target time |
 | --- | --- | --- |
-| Thar Lin Htet | 1–3 | 3 minutes |
+| Thar Lin Htet | 1–3 and 7 | 4 minutes 25 seconds |
 | Honey Linn | 4–6 | 3 minutes |
-| Mi Hsu Myat Win Myint | 7–9 | 4 minutes |
+| Mi Hsu Myat Win Myint | 8–9 | 2 minutes 35 seconds |
 
 ## Slide 1 — SonarQube Quality Gate
 
@@ -84,11 +84,11 @@ The gate requires security and reliability ratings of A, zero blocker issues, no
 
 We did not add a coverage condition. Our course API has manual cURL test scripts but no unit-test suite, so a coverage gate would fail both branches and prove nothing.
 
-Mi Hsu Myat will now run the implementation.
+Thar will now run the live demonstration.
 
 ## Slide 7 — Live demo
 
-**Mi Hsu Myat · 1 minute 25 seconds**
+**Thar · 1 minute 25 seconds**
 
 Now I will run the live demonstration.
 

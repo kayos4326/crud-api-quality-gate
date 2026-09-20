@@ -96,9 +96,10 @@ If Docker or SonarQube fails during class:
 | --- | --- |
 | 0:00 | Slide 1 |
 | 3:00 | Handover from Thar to Honey |
-| 6:00 | Handover from Honey to Mi Hsu Myat |
-| 7:25 | Begin live commands |
-| 8:40 | Return to Slide 8 |
+| 6:00 | Handover from Honey to Thar for the live demo |
+| 6:10 | Begin live commands |
+| 7:25 | Handover from Thar to Mi Hsu Myat for Slide 8 |
+| 8:40 | Begin Slide 9 |
 | 10:00 | Finish Slide 9 |
 
 ## Presentation rules
