@@ -1,5 +1,4 @@
-# The SonarQube server used by the quality gate. Kept in its own file so it
-# never mixes with the application stack in docker-compose.yml.
+# Run SonarQube separately from the application stack.
 services:
   sonarqube:
     image: sonarqube:26.9.0.129388-community

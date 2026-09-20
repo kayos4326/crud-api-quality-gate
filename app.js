@@ -14,8 +14,7 @@ const app = express();
 app.disable('x-powered-by');
 const port = process.env.PORT || 3000;
 
-// Only the origins we actually serve. An unrestricted cors() lets any site
-// on the internet call this API with the user's credentials.
+// Allow requests only from approved websites.
 const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173').split(',');
 app.use(cors({ origin: allowedOrigins }));
 app.use(express.json());
@@ -23,7 +22,7 @@ app.use(express.static(path.join(__dirname, 'dist')));
 
 let superSecret;
 
-// --- REDIS (Distributed Cache) ---
+// Shared Redis cache
 const redis = new Redis({
     host: process.env.REDIS_HOST || '127.0.0.1',
     port: Number.parseInt(process.env.REDIS_PORT || '6379', 10),
@@ -32,7 +31,7 @@ const redis = new Redis({
 redis.on('connect', () => console.log('🟢 Connected to Redis Distributed Cache'));
 redis.on('error', (err) => console.error('🔴 Redis Client Error', err));
 
-// --- AUTH ROUTES ---
+// Register and log in users
 app.post('/api/auth/register', async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -64,7 +63,7 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
-// --- AUTH MIDDLEWARE ---
+// Protect routes with a valid JWT.
 const verifyToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     if (!authHeader) return res.status(403).json({ error: 'No token provided' });
@@ -77,7 +76,7 @@ const verifyToken = (req, res, next) => {
     });
 };
 
-// --- PRODUCTS (Redis Cache-Aside) ---
+// Product routes use Redis to reduce database queries.
 app.get('/api/products', async (req, res) => {
     const CACHE_KEY = 'products:all';
     try {
@@ -182,7 +181,7 @@ app.delete('/api/products/:id', verifyToken, async (req, res) => {
     }
 });
 
-// --- CATEGORIES ---
+// Category routes
 app.get('/api/categories', async (req, res) => {
     try {
         const categories = await prisma.categories.findMany();
@@ -248,7 +247,7 @@ app.delete('/api/categories/:id', verifyToken, async (req, res) => {
     }
 });
 
-// --- BOOTSTRAP: fetch secrets from Azure Key Vault, THEN start server ---
+// Start the API only after loading the secret from Azure Key Vault.
 async function bootstrapServer() {
     try {
         console.log("🔒 Connecting to Azure Key Vault...");

@@ -105,7 +105,7 @@ model users {
   user_orders   user_orders[]
 }
 
-// --- NEW MODELS ADDED IN WEEK 5 ---
+// Orders and their products
 
 model user_orders {
   OrderID     Int          @id @default(autoincrement())

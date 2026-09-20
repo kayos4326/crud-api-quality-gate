@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Blocks until the SonarQube server reports status UP, or gives up.
+# Wait until SonarQube is ready or time runs out.
 set -euo pipefail
 
 HOST_URL="${SONAR_HOST_URL:-http://localhost:9000}"

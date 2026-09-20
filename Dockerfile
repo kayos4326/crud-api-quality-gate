@@ -1,21 +1,19 @@
-# Stage 1: Base Image (Alpine Linux is incredibly small and secure)
+# Use a small Node.js image.
 FROM node:20-alpine
 
-# Stage 2: Set the working directory inside the container
+# Set the app folder.
 WORKDIR /usr/src/app
 
-# Stage 3: Install Dependencies (Optimized for Layer Caching)
+# Install production packages first for faster rebuilds.
 COPY package*.json ./
 RUN npm install --omit=dev
 
-# Stage 4: Copy source explicitly.
-# "COPY . ." would pull in anything not caught by .dockerignore - including a
-# compose file or .env holding live credentials. Name what ships instead.
+# Copy only the files needed to run the API.
 COPY app.js ./
 COPY prisma ./prisma
 COPY dist ./dist
 
-# Stage 5: Drop root. The node image provides an unprivileged "node" user.
+# Run without root privileges.
 USER node
 
 EXPOSE 3000

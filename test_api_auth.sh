@@ -1,5 +1,4 @@
 #!/bin/bash
-# test_api_auth.sh
 
 API_URL="http://localhost:3000/api/products"
 AUTH_URL="http://localhost:3000/api/auth/login"

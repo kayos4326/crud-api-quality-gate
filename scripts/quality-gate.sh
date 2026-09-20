@@ -1,16 +1,12 @@
 #!/usr/bin/env bash
-# Runs the whole gate: start SonarQube if needed, scan, and exit non-zero when
-# the quality gate fails. deploy.sh calls this before it transfers anything.
+# Start SonarQube, scan the code, and return the gate result.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
 export SONAR_HOST_URL="${SONAR_HOST_URL:-http://localhost:9000}"
 
-# The scanner needs Java. On macOS, Homebrew's JDK is often installed but not
-# registered with /usr/libexec/java_home, so /usr/bin/java only shows the
-# "Unable to locate a Java Runtime" dialog. Discover the common Homebrew
-# locations before starting the scan.
+# Find Homebrew Java when macOS cannot find it automatically.
 if ! java -version >/dev/null 2>&1; then
   for java_root in /opt/homebrew/opt/openjdk /usr/local/opt/openjdk; do
     if [ -x "${java_root}/bin/java" ]; then

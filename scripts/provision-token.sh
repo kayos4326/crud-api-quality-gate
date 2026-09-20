@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
-# Mints a SonarQube analysis token and prints it on stdout (nothing else goes
-# to stdout, so this is safe to capture with $(...)).
-#
-# A fresh SonarQube refuses API calls until the default admin password is
-# changed, so that is done first and is safe to re-run.
+# Create a SonarQube token and print only the token.
+# Change the default password when needed.
 set -euo pipefail
 
 HOST_URL="${SONAR_HOST_URL:-http://localhost:9000}"
@@ -23,8 +20,7 @@ else
        --data-urlencode "password=${ADMIN_PASSWORD}" >/dev/null
 fi
 
-# Revoking first makes the script idempotent: SonarQube will not re-issue a
-# token under a name that already exists.
+# Replace an existing token with the same name.
 curl -fsS -u "admin:${ADMIN_PASSWORD}" -X POST "${HOST_URL}/api/user_tokens/revoke" \
      --data-urlencode "name=${TOKEN_NAME}" >/dev/null 2>&1 || true
 

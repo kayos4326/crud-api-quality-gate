@@ -1,19 +1,15 @@
 #!/bin/bash
-# deploy.sh
 set -euo pipefail
 
-# --- Configuration ---
+# Azure VM settings
 VM_USER="azureuser"
-# Supply the real address when deploying:
-#   VM_HOST=your-name.region.cloudapp.azure.com ./deploy.sh
+# Set VM_HOST when running a real deployment.
 VM_HOST="${VM_HOST:-YOUR_AZURE_FQDN}"
 KEY_PATH="$HOME/.ssh/bad-vps-01_key.pem"
 TARGET_DIR="~/crud-api"
 
-# --- Step 0: Quality gate --------------------------------------------------
-# Nothing reaches the VM until SonarQube approves the code. This is the whole
-# point: the gate is not advisory, it is the thing standing in front of scp.
-# Emergency override:  SKIP_QUALITY_GATE=1 ./deploy.sh
+# Stop before upload when the quality gate fails.
+# Emergency override: SKIP_QUALITY_GATE=1 ./deploy.sh
 if [ "${SKIP_QUALITY_GATE:-0}" = "1" ]; then
     echo "WARNING: quality gate skipped by SKIP_QUALITY_GATE=1"
 else
@@ -28,7 +24,7 @@ else
 fi
 
 echo "Step 1: Transferring backend and static UI files to Azure VM..."
-# Built from what exists, so the same script works on any branch.
+# Include the demo file only when the branch has it.
 FILES=(app.js package.json .env dist prisma)
 [ -f reporting.js ] && FILES+=(reporting.js)
 scp -r -i "$KEY_PATH" "${FILES[@]}" "$VM_USER@$VM_HOST:$TARGET_DIR/"

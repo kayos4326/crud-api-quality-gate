@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The demo entry point. Exit code 0 = gate passed, non-zero = gate failed.
+# Run the demo gate. Zero means pass; any other code means fail.
 set -uo pipefail
 
 cd "$(dirname "$0")/.."

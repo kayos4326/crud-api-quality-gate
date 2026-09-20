@@ -1,5 +1,4 @@
 #!/bin/bash
-# test_api.sh
 API_URL="http://localhost:3000/api/products"
 
 echo "--- 1. Testing GET Products ---"
