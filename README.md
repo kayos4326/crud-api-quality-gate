@@ -2,7 +2,7 @@
 
 Backend Application Development (CSX4110), Assumption University.
 
-**Team:** Thar Lin Htet · Honey Linn · Mi Hsu Myat Win Myint
+**Team:** Thar Lin Htet(6642062) · Honey Linn(6726113) · Mi Hsu Myat Win Myint(6726115)
 
 This is the API we built across Weeks 3–10 — Express, Prisma, MySQL, JWT, Redis,
 Azure Key Vault — with an automated quality gate put in front of `deploy.sh`.
