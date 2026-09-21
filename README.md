@@ -80,7 +80,8 @@ git checkout feature/sales-reporting  # gate fails, exit 1
 ./deploy.sh                           # aborts at Step 0, before scp
 ```
 
-See [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md) for the run order and timings.
+See the [demo and rehearsal instructions](presentation/DEMO_AND_REHEARSAL_INSTRUCTIONS.md)
+for the run order and timings.
 
 ### What the gate catches on the bad branch
 
