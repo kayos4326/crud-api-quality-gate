@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# Rebuild and attach the project's quality gate.
-# Overall-code rules make both demo branches easy to compare.
+# Create the rules used by this demo.
 set -euo pipefail
 
 HOST_URL="${SONAR_HOST_URL:-http://localhost:9000}"
@@ -14,20 +13,20 @@ api() {
   curl -fsS -u "${TOKEN}:" -X POST "${HOST_URL}/api/qualitygates/${action}" "$@"
 }
 
-# Create the project before attaching its gate.
+# SonarQube needs the project before we can attach a gate.
 curl -fsS -u "${TOKEN}:" -X POST "${HOST_URL}/api/projects/create" \
      --data-urlencode "project=${PROJECT_KEY}" \
      --data-urlencode "name=${PROJECT_NAME}" >/dev/null 2>&1 \
   && echo "Created project '${PROJECT_KEY}'." \
   || echo "Project '${PROJECT_KEY}' already exists."
 
-# Replace any existing demo gate.
+# Recreate the gate so every run starts the same way.
 api destroy --data-urlencode "name=${GATE_NAME}" >/dev/null 2>&1 || true
 
 echo "Creating quality gate '${GATE_NAME}'..."
 api create --data-urlencode "name=${GATE_NAME}" >/dev/null
 
-# Add a rule that fails above or below a limit.
+# Helper for adding one gate rule
 add_condition() {
   echo "  condition: $1 $2 $3"
   api create_condition \
@@ -37,13 +36,13 @@ add_condition() {
     --data-urlencode "error=$3" >/dev/null
 }
 
-# Ratings use 1 for A, 2 for B, and so on.
+# SonarQube stores A as 1, B as 2, and so on.
 add_condition security_rating          GT 1
 add_condition reliability_rating       GT 1
 add_condition blocker_violations       GT 0
 add_condition duplicated_lines_density GT 3
 
-# Remove seeded rules that require unavailable test coverage or hotspot review.
+# This project does not produce coverage or hotspot-review data.
 drop_condition() {
   local metric="$1"
   local id

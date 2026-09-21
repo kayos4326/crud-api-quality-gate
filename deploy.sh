@@ -1,14 +1,14 @@
 #!/bin/bash
 set -euo pipefail
 
-# Azure VM settings
+# Azure VM details
 VM_USER="azureuser"
-# Set VM_HOST when running a real deployment.
+# Replace VM_HOST when deploying to Azure.
 VM_HOST="${VM_HOST:-YOUR_AZURE_FQDN}"
 KEY_PATH="$HOME/.ssh/bad-vps-01_key.pem"
 TARGET_DIR="~/crud-api"
 
-# Stop before upload when the quality gate fails.
+# Check the code before uploading anything.
 # Emergency override: SKIP_QUALITY_GATE=1 ./deploy.sh
 if [ "${SKIP_QUALITY_GATE:-0}" = "1" ]; then
     echo "WARNING: quality gate skipped by SKIP_QUALITY_GATE=1"
@@ -24,7 +24,7 @@ else
 fi
 
 echo "Step 1: Transferring backend and static UI files to Azure VM..."
-# Include the demo file only when the branch has it.
+# The bad demo branch has one extra file.
 FILES=(app.js package.json .env dist prisma)
 [ -f reporting.js ] && FILES+=(reporting.js)
 scp -r -i "$KEY_PATH" "${FILES[@]}" "$VM_USER@$VM_HOST:$TARGET_DIR/"

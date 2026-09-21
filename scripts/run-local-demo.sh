@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run the demo gate. Zero means pass; any other code means fail.
+# Run the same quality check used by deploy.sh.
 set -uo pipefail
 
 cd "$(dirname "$0")/.."

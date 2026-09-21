@@ -1,5 +1,5 @@
-# Load secrets from .env instead of storing them here.
-# Start with: set -a && source .env && set +a && docker compose up -d
+# Keep secret values in .env, not in this file.
+# Start: set -a && source .env && set +a && docker compose up -d
 services:
   redis-cache:
     image: redis:7-alpine
@@ -20,7 +20,7 @@ services:
       - PORT=3000
       - REDIS_HOST=redis-cache
       - REDIS_PORT=6379
-      # Docker reads these values from the environment.
+      # These values come from .env.
       - DATABASE_URL=${DATABASE_URL:?set DATABASE_URL in .env}
       - JWT_SECRET=${JWT_SECRET:?set JWT_SECRET in .env}
       - KEY_VAULT_URL=${KEY_VAULT_URL:?set KEY_VAULT_URL in .env}

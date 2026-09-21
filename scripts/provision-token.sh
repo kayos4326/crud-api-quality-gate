@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# Create a SonarQube token and print only the token.
-# Change the default password when needed.
+# Prepare the local admin account and return a scan token.
 set -euo pipefail
 
 HOST_URL="${SONAR_HOST_URL:-http://localhost:9000}"
@@ -20,7 +19,7 @@ else
        --data-urlencode "password=${ADMIN_PASSWORD}" >/dev/null
 fi
 
-# Replace an existing token with the same name.
+# Reuse the token name on every run.
 curl -fsS -u "admin:${ADMIN_PASSWORD}" -X POST "${HOST_URL}/api/user_tokens/revoke" \
      --data-urlencode "name=${TOKEN_NAME}" >/dev/null 2>&1 || true
 

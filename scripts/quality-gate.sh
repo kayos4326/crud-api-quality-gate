@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Start SonarQube, scan the code, and return the gate result.
+# Start SonarQube if needed, then scan the project.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
 export SONAR_HOST_URL="${SONAR_HOST_URL:-http://localhost:9000}"
 
-# Find Homebrew Java when macOS cannot find it automatically.
+# macOS may need help finding Java installed by Homebrew.
 if ! java -version >/dev/null 2>&1; then
   for java_root in /opt/homebrew/opt/openjdk /usr/local/opt/openjdk; do
     if [ -x "${java_root}/bin/java" ]; then

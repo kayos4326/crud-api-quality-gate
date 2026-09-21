@@ -14,7 +14,7 @@ const app = express();
 app.disable('x-powered-by');
 const port = process.env.PORT || 3000;
 
-// Allow requests only from approved websites.
+// Only let our frontend call the API.
 const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173').split(',');
 app.use(cors({ origin: allowedOrigins }));
 app.use(express.json());
@@ -22,7 +22,7 @@ app.use(express.static(path.join(__dirname, 'dist')));
 
 let superSecret;
 
-// Shared Redis cache
+// Redis keeps common product requests out of the database.
 const redis = new Redis({
     host: process.env.REDIS_HOST || '127.0.0.1',
     port: Number.parseInt(process.env.REDIS_PORT || '6379', 10),
@@ -31,7 +31,7 @@ const redis = new Redis({
 redis.on('connect', () => console.log('🟢 Connected to Redis Distributed Cache'));
 redis.on('error', (err) => console.error('🔴 Redis Client Error', err));
 
-// Register and log in users
+// User accounts
 app.post('/api/auth/register', async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -63,7 +63,7 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
-// Protect routes with a valid JWT.
+// Check the login token before changing data.
 const verifyToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     if (!authHeader) return res.status(403).json({ error: 'No token provided' });
@@ -76,7 +76,7 @@ const verifyToken = (req, res, next) => {
     });
 };
 
-// Product routes use Redis to reduce database queries.
+// Product routes
 app.get('/api/products', async (req, res) => {
     const CACHE_KEY = 'products:all';
     try {
@@ -247,7 +247,7 @@ app.delete('/api/categories/:id', verifyToken, async (req, res) => {
     }
 });
 
-// Start the API only after loading the secret from Azure Key Vault.
+// Get the secret before accepting requests.
 async function bootstrapServer() {
     try {
         console.log("🔒 Connecting to Azure Key Vault...");

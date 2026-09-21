@@ -1,90 +1,119 @@
-# Campus CRUD API — SonarQube quality gate
+# CRUD API with a SonarQube quality gate
 
-Backend Application Development (CSX4110), Assumption University.
+Backend Application Development (CSX4110), Assumption University
 
-**Team:** Thar Lin Htet(6642062) · Honey Linn(6726113) · Mi Hsu Myat Win Myint(6726115)
+Team members:
 
-This is the API we built across Weeks 3–10 — Express, Prisma, MySQL, JWT, Redis,
-Azure Key Vault — with an automated quality gate put in front of `deploy.sh`.
+- Thar Lin Htet (6642062)
+- Honey Linn (6726113)
+- Mi Hsu Myat Win Myint (6726115)
 
----
+This project uses the CRUD API we built in class. The API uses Express, Prisma,
+MySQL, JWT, Redis, Azure Key Vault, and Docker.
 
-## The pain point
+We added SonarQube because our old deployment script uploaded the project
+without checking the code first. Now the script runs a quality check before it
+copies anything to the Azure VM.
 
-We review each other's code by hand. That works until the deadline is close, and
-then it doesn't: reviewers skim, everyone assumes someone else looked properly,
-and bad code reaches the VM because `./deploy.sh` never asks any questions. It
-copies whatever is in the folder and restarts PM2.
+## Why we made this
 
-We did not have to invent this problem. **We pointed SonarQube at our own
-coursework and it found 19 issues in code we had already submitted**, including:
+Checking code by hand is useful, but it is easy to miss something when the team
+is busy. We scanned our API and SonarQube found 19 issues. Some examples were:
 
-- `app.use(cors())` with no options — every origin on the internet allowed
-- a `Dockerfile` doing `COPY . .`, which copies anything `.dockerignore` misses
-- a container running as **root**
-- eight `catch` blocks that swallowed the error, leaving nothing to debug
-- Express advertising its version in every response header
+- CORS allowed requests from every website
+- the Docker container ran as root
+- the Dockerfile could copy files that should stay private
+- several error handlers did not log the real error
+- Express showed its version in response headers
 
-Separately, and worse: our `docker-compose.yml` had a **live Azure service
-principal secret, the database password, and the JWT secret in plaintext**. Our
-`.gitignore` covered `.env` but not the compose file. That repository was one
-`git init && git push` away from publishing a working cloud credential.
+We fixed these problems on `main`.
 
-Week 9 taught us not to put secrets on disk. We did it anyway, in a different
-file, and no human review caught it.
+We also created `feature/sales-reporting` for the demo. That branch contains
+deliberate mistakes, so the quality gate fails and stops the deployment.
 
-## The proposed solution
+| Branch | Result |
+| --- | --- |
+| `main` | The scan passes and deployment can continue |
+| `feature/sales-reporting` | The scan fails and deployment stops |
 
-Put **SonarQube** in front of the deployment. `deploy.sh` now runs the scan as
-Step 0 and **refuses to `scp` anything** unless the quality gate passes.
+## What you need
 
-The reviewer still reviews design and intent. The machine handles the part
-humans are bad at: applying ~400 rules to every line, every time, without
-getting bored.
+- Node.js 20 or newer
+- Docker Desktop
+- Java for the SonarQube scanner
 
----
+## Run the project check
 
-## What is in this repository
-
-| Branch | What it is | Gate |
-| --- | --- | --- |
-| `main` | The API with all 19 findings fixed | **Passes**, exit 0 — deploy proceeds |
-| `feature/sales-reporting` | A realistic bad feature branch | **Fails**, exit 1 — deploy aborts |
-
----
-
-## Quick start
-
-Requires **Node 20+** and **Docker**.
+Install the packages:
 
 ```bash
 npm install
-./scripts/run-local-demo.sh
 ```
 
-That starts SonarQube in Docker, waits for it, mints a token, creates the
-quality gate, scans, and exits non-zero if the gate fails. The first run pulls
-the image and takes a few minutes; later runs take about 30 seconds.
-
-Report: <http://localhost:9000/dashboard?id=crud-api> (`admin` / `Demo-Sonar-2026`).
-
-Stop it with `docker compose -f docker-compose.sonarqube.yml down`.
-
-## The demo
+Run the local SonarQube demo:
 
 ```bash
-git checkout main                     # gate passes, exit 0
 ./scripts/run-local-demo.sh
-
-git checkout feature/sales-reporting  # gate fails, exit 1
-./deploy.sh                           # aborts at Step 0, before scp
 ```
 
-### What the gate catches on the bad branch
+The first run may take a few minutes because Docker has to download SonarQube.
+After it starts, the report is available at:
 
-7 issues, and **3 of the 6 gate conditions fail**:
+<http://localhost:9000/dashboard?id=crud-api>
 
+Local SonarQube login:
+
+```text
+Username: admin
+Password: Demo-Sonar-2026
 ```
+
+Stop SonarQube with:
+
+```bash
+docker compose -f docker-compose.sonarqube.yml down
+```
+
+## Try both branches
+
+The clean branch should pass:
+
+```bash
+git checkout main
+./scripts/run-local-demo.sh
+```
+
+The demo branch should fail:
+
+```bash
+git checkout feature/sales-reporting
+./deploy.sh
+```
+
+When the second command runs, `deploy.sh` stops at Step 0. It does not run
+`scp`, so no project files are uploaded to Azure.
+
+## Quality gate rules
+
+The gate fails when:
+
+- the security or reliability rating is worse than A
+- there is a blocker issue
+- SonarQube finds a new issue
+- duplicated code is above 3%
+
+We did not add a coverage rule because this class project has shell-based API
+tests, not a unit-test suite with a coverage report.
+
+## What happens on the demo branch
+
+SonarQube reports seven issues. The examples include a hard-coded JWT key, a
+hard-coded database password, MD5, `Math.random()` used for a token, and a
+function that is too difficult to follow.
+
+The expected gate result is:
+
+```text
 ERROR  security_rating               actual=5 (E)   must be A
 ERROR  blocker_violations            actual=1       must be 0
 ERROR  new_violations                actual=7       must be 0
@@ -93,103 +122,33 @@ OK     duplicated_lines_density      actual=0.0%
 OK     new_duplicated_lines_density  actual=0.0%
 ```
 
-| Planted in `reporting.js` | Rule | Which week warned us |
-| --- | --- | --- |
-| `jwt.sign()` with a literal key — **Blocker** | `javascript:S6437` | Week 9, secrets |
-| Hard-coded database password | `javascript:S2068` | Week 9, secrets |
-| MD5 used for a fingerprint | `javascript:S4790` | — |
-| `Math.random()` for a download token | `javascript:S2245` | — |
-| Cognitive complexity 34 against a limit of 15 | `javascript:S3776` | — |
+## SonarQube does not catch everything
 
----
+The bad branch also has an SQL query built with string concatenation. SonarQube
+Community Build did not report it for JavaScript. The branch also forgets to
+clear the Redis product cache after an import. SonarQube cannot understand that
+project-specific rule.
 
-## What the gate does **not** catch
+This is why we still need code review. SonarQube catches many common problems,
+but a person still has to check the business logic and security decisions.
 
-This matters more than the list above, and it is the honest part of the talk.
+## Main files
 
-**1. SQL injection — not detected at all.** `reporting.js` builds a query by
-string concatenation, exactly what Week 3 told us never to do:
+| File | Purpose |
+| --- | --- |
+| `app.js` | Express API |
+| `deploy.sh` | Checks the code, then deploys it |
+| `scripts/quality-gate.sh` | Runs the SonarQube scan |
+| `scripts/setup-quality-gate.sh` | Creates the gate rules |
+| `docker-compose.sonarqube.yml` | Runs local SonarQube |
+| `docker-compose.yml` | Runs the API and Redis |
+| `prisma/schema.prisma` | Database models |
 
-```js
-const sql = "SELECT ... WHERE LOWER(ProductName) LIKE '%" + keyword.toLowerCase() + "%'";
-const [rows] = await reportPool.query(sql);
-```
+## Current limits
 
-SonarQube **Community Build does not flag this in JavaScript.** We verified it
-rather than assuming: we wrote a probe file with three different injection
-patterns (concatenation into a variable, concatenation inline in the call, and a
-template literal) and scanned it. Zero issues. The rule that would catch it,
-`javascript:S3649`, requires taint analysis and **does not exist in this
-edition** — it needs Developer Edition or SonarQube Cloud.
-
-Interestingly, the equivalent Java rule *does* ship in Community Build. Static
-analysis coverage is not uniform across languages, and "we run SonarQube" does
-not mean "we are covered."
-
-**2. Missing cache invalidation — not detected.** The new `/api/reports/import`
-endpoint writes products but never calls `await redis.del('products:all')`, so
-the catalogue serves stale data for 60 seconds. Week 10 called that step
-"crucial." No rule catches it, because it is not a bad *pattern* — it is missing
-business logic. Only a human who knows the system would spot it.
-
-That is the argument for keeping human review, stated precisely: the gate
-handles the mechanical checks so the reviewer has attention left for the things
-only a reviewer can do.
-
----
-
-## About the quality gate
-
-`scripts/setup-quality-gate.sh` builds a gate named **Campus CRUD API** and
-attaches it to the project. It keeps SonarQube's seeded new-code conditions for
-issues and duplication, adds four conditions on *all* code, and removes the
-seeded coverage conditions.
-
-| Condition | Fails when | Scope |
-| --- | --- | --- |
-| `new_violations` | any new issue | new code |
-| `new_duplicated_lines_density` | above 3% | new code |
-| `security_rating` | worse than A | all code |
-| `reliability_rating` | worse than A | all code |
-| `blocker_violations` | above 0 | all code |
-| `duplicated_lines_density` | above 3% | all code |
-
-**Why conditions on all code, not just new code?** Because new-code conditions
-are worked out from **commit dates** against a baseline analysis. On a freshly
-cloned repository every commit predates the first scan, so there is no new code
-and the gate passes with almost nothing evaluated. That behaviour is what makes
-SonarQube adoptable on a legacy codebase — but it is useless for a demo that has
-to fail on demand.
-
-**Why no coverage condition?** We wrote this API across eight weeks with no unit
-tests, only the `test_api*.sh` cURL scripts. Coverage is 0%, so gating on it
-would fail the clean baseline too and prove nothing. Writing real tests is the
-obvious next step; pretending otherwise would be dishonest.
-
-The duplication conditions are configured and currently report 0% — they are
-there to catch copy-paste in future work, not because they fire today.
-
----
-
-## Honest limitations
-
-- **Community Build analyses one branch at a time.** Real pull-request analysis,
-  where "new code" means the diff, needs Developer Edition or SonarQube Cloud.
-- **A quality gate is not a security audit.** It matches known bad patterns. It
-  does not understand our pricing rules and will not tell us they are wrong.
-- **False positives exist.** Someone has to own triage, or the team learns to
-  reach for `SKIP_QUALITY_GATE=1`, which is worse than having no gate.
-- **The override is deliberate.** `SKIP_QUALITY_GATE=1 ./deploy.sh` still works
-  and prints a warning. A gate nobody can bypass in an emergency gets removed
-  entirely; one that logs its bypass gets respected.
-- The SonarQube admin password in `scripts/provision-token.sh` is hardcoded on
-  purpose: it is a disposable local container. Do not copy that pattern.
-
-## What we did not do
-
-- No unit tests, so no coverage gate.
-- The gate runs locally, not on a server. A real team would run it in CI so it
-  cannot be skipped by forgetting; `deploy.sh` is where our pipeline lives, so
-  that is where we put it.
-- We did not rotate the credentials that were in `docker-compose.yml` as part of
-  this repo — that is done in the Azure portal, and it needs doing.
+- The SonarQube server runs locally instead of in GitHub Actions.
+- Community Build scans one branch at a time. Pull-request analysis needs a
+  paid SonarQube edition or SonarQube Cloud.
+- The project does not have a unit-test coverage report yet.
+- `SKIP_QUALITY_GATE=1 ./deploy.sh` is available for an emergency, so the person
+  deploying the project must use that option carefully.

@@ -1,4 +1,4 @@
-# Run SonarQube separately from the application stack.
+# Local SonarQube used by the quality check
 services:
   sonarqube:
     image: sonarqube:26.9.0.129388-community

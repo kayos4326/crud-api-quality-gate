@@ -1,19 +1,19 @@
-# Use a small Node.js image.
+# Small Node.js base image
 FROM node:20-alpine
 
-# Set the app folder.
+# Work inside the app folder
 WORKDIR /usr/src/app
 
-# Install production packages first for faster rebuilds.
+# Install packages before copying code so Docker can reuse this layer
 COPY package*.json ./
 RUN npm install --omit=dev
 
-# Copy only the files needed to run the API.
+# Copy only what the API needs
 COPY app.js ./
 COPY prisma ./prisma
 COPY dist ./dist
 
-# Run without root privileges.
+# Do not run the app as root
 USER node
 
 EXPOSE 3000
