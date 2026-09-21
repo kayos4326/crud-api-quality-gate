@@ -80,9 +80,6 @@ git checkout feature/sales-reporting  # gate fails, exit 1
 ./deploy.sh                           # aborts at Step 0, before scp
 ```
 
-See the [demo and rehearsal instructions](presentation/DEMO_AND_REHEARSAL_INSTRUCTIONS.md)
-for the run order and timings.
-
 ### What the gate catches on the bad branch
 
 7 issues, and **3 of the 6 gate conditions fail**:
@@ -196,13 +193,3 @@ there to catch copy-paste in future work, not because they fire today.
   that is where we put it.
 - We did not rotate the credentials that were in `docker-compose.yml` as part of
   this repo — that is done in the Azure portal, and it needs doing.
-
----
-
-## Final presentation
-
-- [PowerPoint deck](presentation/SonarQube_Quality_Gate_Final_Presentation_v4.pptx)
-- [10-minute speaking script](presentation/PRESENTATION_SCRIPT.md)
-- [Live-demo and rehearsal instructions](presentation/DEMO_AND_REHEARSAL_INSTRUCTIONS.md)
-
-The PowerPoint also contains the complete speaking script in Presenter Notes.
