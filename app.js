@@ -8,11 +8,15 @@ const { PrismaClient } = require('@prisma/client');
 const { SecretClient } = require('@azure/keyvault-secrets');
 const { DefaultAzureCredential } = require('@azure/identity');
 const Redis = require('ioredis');
+const reporting = require('./reporting');
 
 const prisma = new PrismaClient();
 const app = express();
 app.disable('x-powered-by');
 const port = process.env.PORT || 3000;
+
+// Local fallback used by this demo branch.
+const JWT_SECRET = process.env.JWT_SECRET || 'my_super_secret_key_12345';
 
 // Only let our frontend call the API.
 const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173').split(',');
@@ -55,7 +59,7 @@ app.post('/api/auth/login', async (req, res) => {
         const match = await bcrypt.compare(password, user.password_hash);
         if (!match) return res.status(401).json({ error: 'Invalid credentials' });
 
-        const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '1h' });
         res.json({ success: true, token });
     } catch (error) {
         console.error('Login failed:', error);
@@ -69,7 +73,7 @@ const verifyToken = (req, res, next) => {
     if (!authHeader) return res.status(403).json({ error: 'No token provided' });
 
     const token = authHeader.split(' ')[1];
-    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    jwt.verify(token, JWT_SECRET, (err, decoded) => {
         if (err) return res.status(401).json({ error: 'Unauthorized' });
         req.userId = decoded.id;
         next();
@@ -178,6 +182,51 @@ app.delete('/api/products/:id', verifyToken, async (req, res) => {
         if (error.code === 'P2025') return res.status(404).json({ success: false, error: 'Product not found' });
         console.error('Product delete failed:', error);
         res.status(500).json({ success: false, error: 'Delete failed' });
+    }
+});
+
+// Reporting routes
+app.get('/api/reports/search', async (req, res) => {
+    try {
+        const results = await reporting.searchProducts(req.query.q || '');
+        res.json({ success: true, count: results.length, data: results });
+    } catch (error) {
+        console.error('Report search failed:', error);
+        res.status(500).json({ success: false, error: 'Search failed' });
+    }
+});
+
+app.get('/api/reports/products/:month', verifyToken, async (req, res) => {
+    try {
+        res.json({ success: true, data: await reporting.buildProductReport(req.params.month) });
+    } catch (error) {
+        console.error('Product report failed:', error);
+        res.status(500).json({ success: false, error: 'Report failed' });
+    }
+});
+
+// Add sample products for reports.
+app.post('/api/reports/import', verifyToken, async (req, res) => {
+    try {
+        const { items } = req.body;
+        if (!Array.isArray(items)) return res.status(400).json({ error: 'items must be an array' });
+
+        for (const item of items) {
+            await prisma.products.create({
+                data: {
+                    ProductName: item.ProductName,
+                    SupplierID: item.SupplierID || 1,
+                    CategoryID: item.CategoryID || 1,
+                    Unit: item.Unit || '1 box',
+                    Price: Number.parseFloat(item.Price)
+                }
+            });
+        }
+
+        res.status(201).json({ success: true, imported: items.length });
+    } catch (error) {
+        console.error('Import failed:', error);
+        res.status(500).json({ success: false, error: 'Import failed' });
     }
 });
 
